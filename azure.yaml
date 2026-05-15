@@ -1,0 +1,10 @@
+name: snaktocat-bouygues
+metadata:
+  template: snaktocat-bouygues@0.0.1
+services:
+  web:
+    project: .
+    language: ts
+    host: containerapp
+    docker:
+      path: Dockerfile
