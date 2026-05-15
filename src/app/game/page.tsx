@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import SnaktocatGame from '@/components/game/SnaktocatGame';
+import type { SnaktocatGameRef } from '@/components/game/SnaktocatGame';
 import Nokia3310Frame from '@/components/game/Nokia3310Frame';
 import ScoreCard from '@/components/game/ScoreCard';
 import { encodePayload } from '@/lib/crypto';
@@ -17,11 +18,12 @@ interface Player {
 
 type Phase = 'playing' | 'result' | 'finished';
 
-const SCREEN_W = 300;
-const SCREEN_H = 300;
+const SCREEN_W = 260;
+const SCREEN_H = 260;
 
 export default function GamePage() {
   const router = useRouter();
+  const gameRef = useRef<SnaktocatGameRef>(null);
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
   const [attemptNumber, setAttemptNumber] = useState(1);
@@ -225,9 +227,17 @@ export default function GamePage() {
 
   // Game screen with Nokia 3310 frame
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center overflow-hidden p-2 sm:p-4">
-      <Nokia3310Frame screenWidth={SCREEN_W} screenHeight={SCREEN_H}>
+    <main className="min-h-screen flex flex-col items-center justify-center overflow-hidden p-2 sm:p-4 bg-[#0d1117]">
+      <Nokia3310Frame
+        screenWidth={SCREEN_W}
+        screenHeight={SCREEN_H}
+        onDpadUp={() => gameRef.current?.handleDirection('UP')}
+        onDpadDown={() => gameRef.current?.handleDirection('DOWN')}
+        onDpadLeft={() => gameRef.current?.handleDirection('LEFT')}
+        onDpadRight={() => gameRef.current?.handleDirection('RIGHT')}
+      >
         <SnaktocatGame
+          ref={gameRef}
           key={gameKey}
           username={player.username}
           attemptNumber={attemptNumber}

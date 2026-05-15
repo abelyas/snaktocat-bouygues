@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useCallback, useState, useImperativeHandle, forwardRef } from 'react';
 
 interface SnaktocatGameProps {
   username: string;
@@ -11,48 +11,46 @@ interface SnaktocatGameProps {
   onGameStart: () => void;
 }
 
+export interface SnaktocatGameRef {
+  handleDirection: (dir: Direction) => void;
+}
+
 type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
 type GameState = 'waiting' | 'playing' | 'dead';
 
 interface Point { x: number; y: number; }
 
-// Food types with emojis (GitHub + Bouygues mix)
-const FOOD_TYPES = [
-  { emoji: '🐙', name: 'octocat' },
-  { emoji: '⭐', name: 'star' },
-  { emoji: '✨', name: 'copilot' },
-  { emoji: '📱', name: 'phone' },
-  { emoji: '📡', name: 'signal' },
-  { emoji: '💎', name: 'gem' },
-];
-
 const GRID_SIZE = 20;
-const CELL_SIZE = 15;
+const CELL_SIZE = 13;
 const CANVAS_W = GRID_SIZE * CELL_SIZE;
 const CANVAS_H = GRID_SIZE * CELL_SIZE;
 
-// Speed: starts at 150ms, decreases every 5 points
+// Nokia green LCD colors
+const LCD_BG = '#9bbc0f';
+const LCD_DARK = '#0f380f';
+const LCD_MID = '#306230';
+const LCD_LIGHT = '#8bac0f';
+
 function getSpeed(score: number): number {
   const base = 150;
   const reduction = Math.floor(score / 5) * 10;
   return Math.max(60, base - reduction);
 }
 
-export default function SnaktocatGame({
+const SnaktocatGame = forwardRef<SnaktocatGameRef, SnaktocatGameProps>(function SnaktocatGame({
   username,
   attemptNumber,
   maxAttempts,
   bestScore,
   onGameOver,
   onGameStart,
-}: SnaktocatGameProps) {
+}, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<{
     snake: Point[];
     direction: Direction;
     nextDirection: Direction;
     food: Point;
-    foodType: number;
     score: number;
     gameState: GameState;
     lastTick: number;
@@ -62,7 +60,6 @@ export default function SnaktocatGame({
     direction: 'RIGHT',
     nextDirection: 'RIGHT',
     food: { x: 15, y: 10 },
-    foodType: 0,
     score: 0,
     gameState: 'waiting',
     lastTick: 0,
@@ -83,7 +80,6 @@ export default function SnaktocatGame({
       };
     } while (s.snake.some(seg => seg.x === newFood.x && seg.y === newFood.y));
     s.food = newFood;
-    s.foodType = Math.floor(Math.random() * FOOD_TYPES.length);
   }, []);
 
   const resetGame = useCallback(() => {
@@ -108,12 +104,27 @@ export default function SnaktocatGame({
     onGameStart();
   }, [onGameStart]);
 
+  const handleDirection = useCallback((dir: Direction) => {
+    const s = stateRef.current;
+    if (s.gameState === 'waiting') {
+      startGame();
+    }
+    if (s.gameState !== 'playing') return;
+    switch (dir) {
+      case 'UP': if (s.direction !== 'DOWN') s.nextDirection = 'UP'; break;
+      case 'DOWN': if (s.direction !== 'UP') s.nextDirection = 'DOWN'; break;
+      case 'LEFT': if (s.direction !== 'RIGHT') s.nextDirection = 'LEFT'; break;
+      case 'RIGHT': if (s.direction !== 'LEFT') s.nextDirection = 'RIGHT'; break;
+    }
+  }, [startGame]);
+
+  useImperativeHandle(ref, () => ({ handleDirection }), [handleDirection]);
+
   const tick = useCallback(() => {
     const s = stateRef.current;
     if (s.gameState !== 'playing') return;
 
     s.direction = s.nextDirection;
-
     const head = { ...s.snake[0] };
     switch (s.direction) {
       case 'UP': head.y--; break;
@@ -122,7 +133,6 @@ export default function SnaktocatGame({
       case 'RIGHT': head.x++; break;
     }
 
-    // Wall collision
     if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
       s.gameState = 'dead';
       setGameState('dead');
@@ -130,7 +140,6 @@ export default function SnaktocatGame({
       return;
     }
 
-    // Self collision
     if (s.snake.some(seg => seg.x === head.x && seg.y === head.y)) {
       s.gameState = 'dead';
       setGameState('dead');
@@ -140,7 +149,6 @@ export default function SnaktocatGame({
 
     s.snake.unshift(head);
 
-    // Ate food?
     if (head.x === s.food.x && head.y === s.food.y) {
       s.score++;
       setDisplayScore(s.score);
@@ -150,7 +158,7 @@ export default function SnaktocatGame({
     }
   }, [onGameOver, spawnFood]);
 
-  // Game loop
+  // Game loop: Nokia LCD pixel style
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -167,129 +175,93 @@ export default function SnaktocatGame({
         }
       }
 
-      // Clear
-      ctx.fillStyle = '#0d1117';
+      // Green LCD background
+      ctx.fillStyle = LCD_BG;
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-      // Grid lines (subtle)
-      ctx.strokeStyle = '#161b22';
-      ctx.lineWidth = 0.5;
-      for (let x = 0; x <= GRID_SIZE; x++) {
-        ctx.beginPath();
-        ctx.moveTo(x * CELL_SIZE, 0);
-        ctx.lineTo(x * CELL_SIZE, CANVAS_H);
-        ctx.stroke();
+      // Draw border (Nokia snake had walls)
+      ctx.fillStyle = LCD_DARK;
+      for (let i = 0; i < GRID_SIZE; i++) {
+        // Top and bottom border
+        ctx.fillRect(i * CELL_SIZE, 0, CELL_SIZE - 1, CELL_SIZE - 1);
+        ctx.fillRect(i * CELL_SIZE, (GRID_SIZE - 1) * CELL_SIZE, CELL_SIZE - 1, CELL_SIZE - 1);
       }
-      for (let y = 0; y <= GRID_SIZE; y++) {
-        ctx.beginPath();
-        ctx.moveTo(0, y * CELL_SIZE);
-        ctx.lineTo(CANVAS_W, y * CELL_SIZE);
-        ctx.stroke();
+      for (let i = 1; i < GRID_SIZE - 1; i++) {
+        // Left and right border
+        ctx.fillRect(0, i * CELL_SIZE, CELL_SIZE - 1, CELL_SIZE - 1);
+        ctx.fillRect((GRID_SIZE - 1) * CELL_SIZE, i * CELL_SIZE, CELL_SIZE - 1, CELL_SIZE - 1);
       }
 
-      // Draw food
-      ctx.font = `${CELL_SIZE - 2}px serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(
-        FOOD_TYPES[s.foodType].emoji,
-        s.food.x * CELL_SIZE + CELL_SIZE / 2,
-        s.food.y * CELL_SIZE + CELL_SIZE / 2
-      );
+      // Draw food as a small dark pixel block
+      ctx.fillStyle = LCD_DARK;
+      const fx = s.food.x * CELL_SIZE + 2;
+      const fy = s.food.y * CELL_SIZE + 2;
+      ctx.fillRect(fx, fy, CELL_SIZE - 5, CELL_SIZE - 5);
+      // Small dot pattern for food
+      ctx.fillRect(fx + 2, fy - 2, CELL_SIZE - 9, 2);
+      ctx.fillRect(fx - 2, fy + 2, 2, CELL_SIZE - 9);
 
-      // Draw snake body
+      // Draw snake: dark pixel blocks like original Nokia
+      ctx.fillStyle = LCD_DARK;
       s.snake.forEach((seg, i) => {
         const x = seg.x * CELL_SIZE;
         const y = seg.y * CELL_SIZE;
-        const pad = 1;
-
         if (i === 0) {
-          // Head: Mona-colored (purple-ish)
-          const gradient = ctx.createRadialGradient(
-            x + CELL_SIZE / 2, y + CELL_SIZE / 2, 0,
-            x + CELL_SIZE / 2, y + CELL_SIZE / 2, CELL_SIZE / 2
-          );
-          gradient.addColorStop(0, '#a371f7');
-          gradient.addColorStop(1, '#8957e5');
-          ctx.fillStyle = gradient;
-          ctx.beginPath();
-          ctx.roundRect(x + pad, y + pad, CELL_SIZE - pad * 2, CELL_SIZE - pad * 2, 4);
-          ctx.fill();
-
-          // Eyes
-          ctx.fillStyle = '#ffffff';
-          const eyeSize = 3;
-          let eyeOffX1 = 0, eyeOffY1 = 0, eyeOffX2 = 0, eyeOffY2 = 0;
-          switch (s.direction) {
-            case 'RIGHT':
-              eyeOffX1 = 7; eyeOffY1 = 3; eyeOffX2 = 7; eyeOffY2 = 9; break;
-            case 'LEFT':
-              eyeOffX1 = 5; eyeOffY1 = 3; eyeOffX2 = 5; eyeOffY2 = 9; break;
-            case 'UP':
-              eyeOffX1 = 3; eyeOffY1 = 5; eyeOffX2 = 9; eyeOffY2 = 5; break;
-            case 'DOWN':
-              eyeOffX1 = 3; eyeOffY1 = 7; eyeOffX2 = 9; eyeOffY2 = 7; break;
-          }
-          ctx.beginPath();
-          ctx.arc(x + eyeOffX1, y + eyeOffY1, eyeSize / 2, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(x + eyeOffX2, y + eyeOffY2, eyeSize / 2, 0, Math.PI * 2);
-          ctx.fill();
+          // Head: slightly larger looking block
+          ctx.fillRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
         } else {
-          // Body segments: gradient from GitHub purple to darker
-          const alpha = 1 - (i / (s.snake.length + 5)) * 0.6;
-          ctx.fillStyle = `rgba(137, 87, 229, ${alpha})`;
-          ctx.beginPath();
-          ctx.roundRect(x + pad, y + pad, CELL_SIZE - pad * 2, CELL_SIZE - pad * 2, 3);
-          ctx.fill();
+          // Body: standard pixel block
+          ctx.fillRect(x + 1, y + 1, CELL_SIZE - 3, CELL_SIZE - 3);
         }
       });
 
-      // HUD
-      ctx.fillStyle = '#8b949e';
-      ctx.font = 'bold 11px monospace';
+      // HUD: Score at top
+      ctx.fillStyle = LCD_DARK;
+      ctx.font = 'bold 9px monospace';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.fillText(`Score: ${s.score}`, 4, 4);
+      ctx.fillText(`Score:${s.score}`, CELL_SIZE + 2, 2);
       ctx.textAlign = 'right';
-      ctx.fillText(`Best: ${bestScore}`, CANVAS_W - 4, 4);
+      ctx.fillText(`Best:${bestScore}`, CANVAS_W - CELL_SIZE - 2, 2);
 
-      // Waiting state
+      // Waiting state overlay
       if (s.gameState === 'waiting') {
-        ctx.fillStyle = 'rgba(13, 17, 23, 0.7)';
-        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = LCD_BG;
+        ctx.fillRect(CELL_SIZE * 3, CELL_SIZE * 6, CELL_SIZE * 14, CELL_SIZE * 8);
+        ctx.fillStyle = LCD_DARK;
+        ctx.strokeStyle = LCD_DARK;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(CELL_SIZE * 3, CELL_SIZE * 6, CELL_SIZE * 14, CELL_SIZE * 8);
 
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 18px sans-serif';
+        ctx.fillStyle = LCD_DARK;
+        ctx.font = 'bold 14px monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('🐍 Snaktocat', CANVAS_W / 2, CANVAS_H / 2 - 30);
+        ctx.fillText('SNAKTOCAT', CANVAS_W / 2, CANVAS_H / 2 - 24);
 
-        ctx.fillStyle = '#8b949e';
-        ctx.font = '12px sans-serif';
-        ctx.fillText(`@${username}`, CANVAS_W / 2, CANVAS_H / 2);
-        ctx.fillText(`Attempt ${attemptNumber}/${maxAttempts}`, CANVAS_W / 2, CANVAS_H / 2 + 20);
+        ctx.font = '9px monospace';
+        ctx.fillText(`@${username}`, CANVAS_W / 2, CANVAS_H / 2 - 4);
+        ctx.fillText(`Attempt ${attemptNumber}/${maxAttempts}`, CANVAS_W / 2, CANVAS_H / 2 + 12);
 
-        ctx.fillStyle = '#58a6ff';
-        ctx.font = 'bold 12px sans-serif';
-        ctx.fillText('Tap or press any arrow key', CANVAS_W / 2, CANVAS_H / 2 + 50);
+        ctx.font = 'bold 9px monospace';
+        ctx.fillText('Press any direction', CANVAS_W / 2, CANVAS_H / 2 + 30);
       }
 
       // Dead state
       if (s.gameState === 'dead') {
-        ctx.fillStyle = 'rgba(13, 17, 23, 0.8)';
-        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = LCD_BG;
+        ctx.fillRect(CELL_SIZE * 4, CELL_SIZE * 7, CELL_SIZE * 12, CELL_SIZE * 6);
+        ctx.fillStyle = LCD_DARK;
+        ctx.strokeStyle = LCD_DARK;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(CELL_SIZE * 4, CELL_SIZE * 7, CELL_SIZE * 12, CELL_SIZE * 6);
 
-        ctx.fillStyle = '#f85149';
-        ctx.font = 'bold 20px sans-serif';
+        ctx.font = 'bold 12px monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('💀 Game Over', CANVAS_W / 2, CANVAS_H / 2 - 10);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 28px sans-serif';
-        ctx.fillText(`${s.score}`, CANVAS_W / 2, CANVAS_H / 2 + 25);
+        ctx.fillText('GAME OVER', CANVAS_W / 2, CANVAS_H / 2 - 8);
+        ctx.font = 'bold 16px monospace';
+        ctx.fillText(`${s.score}`, CANVAS_W / 2, CANVAS_H / 2 + 14);
       }
 
       animRef.current = requestAnimationFrame(loop);
@@ -302,38 +274,17 @@ export default function SnaktocatGame({
   // Keyboard controls
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      const s = stateRef.current;
-
-      if (s.gameState === 'waiting') {
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-          startGame();
-        }
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        const dir = e.key.replace('Arrow', '').toUpperCase() as Direction;
+        handleDirection(dir);
       }
-
-      if (s.gameState !== 'playing') return;
-
-      switch (e.key) {
-        case 'ArrowUp':
-          if (s.direction !== 'DOWN') s.nextDirection = 'UP';
-          break;
-        case 'ArrowDown':
-          if (s.direction !== 'UP') s.nextDirection = 'DOWN';
-          break;
-        case 'ArrowLeft':
-          if (s.direction !== 'RIGHT') s.nextDirection = 'LEFT';
-          break;
-        case 'ArrowRight':
-          if (s.direction !== 'LEFT') s.nextDirection = 'RIGHT';
-          break;
-      }
-      e.preventDefault();
     };
-
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [startGame]);
+  }, [handleDirection]);
 
-  // Touch controls
+  // Touch swipe controls on canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -343,32 +294,23 @@ export default function SnaktocatGame({
       const s = stateRef.current;
       const touch = e.touches[0];
       s.touchStart = { x: touch.clientX, y: touch.clientY };
-
-      if (s.gameState === 'waiting') {
-        startGame();
-      }
+      if (s.gameState === 'waiting') startGame();
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
       e.preventDefault();
       const s = stateRef.current;
       if (!s.touchStart || s.gameState !== 'playing') return;
-
       const touch = e.changedTouches[0];
       const dx = touch.clientX - s.touchStart.x;
       const dy = touch.clientY - s.touchStart.y;
       const minSwipe = 20;
-
       if (Math.abs(dx) < minSwipe && Math.abs(dy) < minSwipe) return;
-
       if (Math.abs(dx) > Math.abs(dy)) {
-        if (dx > 0 && s.direction !== 'LEFT') s.nextDirection = 'RIGHT';
-        else if (dx < 0 && s.direction !== 'RIGHT') s.nextDirection = 'LEFT';
+        handleDirection(dx > 0 ? 'RIGHT' : 'LEFT');
       } else {
-        if (dy > 0 && s.direction !== 'UP') s.nextDirection = 'DOWN';
-        else if (dy < 0 && s.direction !== 'DOWN') s.nextDirection = 'UP';
+        handleDirection(dy > 0 ? 'DOWN' : 'UP');
       }
-
       s.touchStart = null;
     };
 
@@ -378,25 +320,19 @@ export default function SnaktocatGame({
       canvas.removeEventListener('touchstart', handleTouchStart);
       canvas.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [startGame]);
+  }, [startGame, handleDirection]);
 
-  // Initialize
-  useEffect(() => {
-    resetGame();
-  }, [resetGame]);
+  useEffect(() => { resetGame(); }, [resetGame]);
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="text-gray-500 text-xs">
-        Attempt {attemptNumber}/{maxAttempts} · Score: {displayScore}
-      </div>
-      <canvas
-        ref={canvasRef}
-        width={CANVAS_W}
-        height={CANVAS_H}
-        className="rounded-lg border border-[#30363d]"
-        style={{ touchAction: 'none' }}
-      />
-    </div>
+    <canvas
+      ref={canvasRef}
+      width={CANVAS_W}
+      height={CANVAS_H}
+      className="w-full h-full"
+      style={{ touchAction: 'none', imageRendering: 'pixelated' }}
+    />
   );
-}
+});
+
+export default SnaktocatGame;
