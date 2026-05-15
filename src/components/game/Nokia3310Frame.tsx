@@ -106,7 +106,7 @@ export default function Nokia3310Frame({
 
           {/* D-pad / Navigation circle */}
           <div className="flex justify-center mb-3">
-            <div className="relative" style={{ width: 80, height: 80 }}>
+            <div className="relative" style={{ width: 100, height: 100 }}>
               {/* Outer ring */}
               <div
                 className="absolute inset-0 rounded-full"
@@ -120,8 +120,8 @@ export default function Nokia3310Frame({
               <div
                 className="absolute rounded-full"
                 style={{
-                  width: 12,
-                  height: 12,
+                  width: 14,
+                  height: 14,
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
@@ -129,27 +129,58 @@ export default function Nokia3310Frame({
                   boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
                 }}
               />
-              {/* Clickable D-pad zones */}
+              {/* UP arrow */}
               <button
                 onClick={onDpadUp}
-                className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center opacity-0 active:opacity-30 active:bg-white rounded-full cursor-pointer z-10"
+                className="absolute top-1 left-1/2 -translate-x-1/2 w-10 h-10 flex items-center justify-center active:opacity-60 cursor-pointer z-10"
                 aria-label="Up"
-              />
+              >
+                <div style={{
+                  width: 0, height: 0,
+                  borderLeft: '8px solid transparent',
+                  borderRight: '8px solid transparent',
+                  borderBottom: '12px solid #1a2738',
+                }} />
+              </button>
+              {/* DOWN arrow */}
               <button
                 onClick={onDpadDown}
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center opacity-0 active:opacity-30 active:bg-white rounded-full cursor-pointer z-10"
+                className="absolute bottom-1 left-1/2 -translate-x-1/2 w-10 h-10 flex items-center justify-center active:opacity-60 cursor-pointer z-10"
                 aria-label="Down"
-              />
+              >
+                <div style={{
+                  width: 0, height: 0,
+                  borderLeft: '8px solid transparent',
+                  borderRight: '8px solid transparent',
+                  borderTop: '12px solid #1a2738',
+                }} />
+              </button>
+              {/* LEFT arrow */}
               <button
                 onClick={onDpadLeft}
-                className="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center opacity-0 active:opacity-30 active:bg-white rounded-full cursor-pointer z-10"
+                className="absolute left-1 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center active:opacity-60 cursor-pointer z-10"
                 aria-label="Left"
-              />
+              >
+                <div style={{
+                  width: 0, height: 0,
+                  borderTop: '8px solid transparent',
+                  borderBottom: '8px solid transparent',
+                  borderRight: '12px solid #1a2738',
+                }} />
+              </button>
+              {/* RIGHT arrow */}
               <button
                 onClick={onDpadRight}
-                className="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center opacity-0 active:opacity-30 active:bg-white rounded-full cursor-pointer z-10"
+                className="absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center active:opacity-60 cursor-pointer z-10"
                 aria-label="Right"
-              />
+              >
+                <div style={{
+                  width: 0, height: 0,
+                  borderTop: '8px solid transparent',
+                  borderBottom: '8px solid transparent',
+                  borderLeft: '12px solid #1a2738',
+                }} />
+              </button>
             </div>
           </div>
 

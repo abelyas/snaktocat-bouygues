@@ -32,9 +32,9 @@ const LCD_MID = '#306230';
 const LCD_LIGHT = '#8bac0f';
 
 function getSpeed(score: number): number {
-  const base = 150;
+  const base = 250;
   const reduction = Math.floor(score / 5) * 10;
-  return Math.max(60, base - reduction);
+  return Math.max(80, base - reduction);
 }
 
 const SnaktocatGame = forwardRef<SnaktocatGameRef, SnaktocatGameProps>(function SnaktocatGame({
