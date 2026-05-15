@@ -68,8 +68,10 @@ export default function Mona3310Frame({
             background: 'linear-gradient(145deg, #b8bcc0 0%, #8e9399 30%, #a0a5aa 60%, #c0c4c8 100%)',
             borderRadius: '12px',
             padding: '10px',
-            margin: '0 8px',
+            margin: '0 auto',
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.4), 0 2px 6px rgba(0,0,0,0.3)',
+            display: 'flex',
+            justifyContent: 'center',
           }}
         >
           {/* Green LCD screen */}
@@ -81,7 +83,7 @@ export default function Mona3310Frame({
               boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.3)',
               width: screenWidth,
               height: screenHeight,
-              margin: '0 auto',
+              flexShrink: 0,
             }}
           >
             {children}

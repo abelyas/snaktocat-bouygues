@@ -83,8 +83,8 @@ const SnaktocatGame = forwardRef<SnaktocatGameRef, SnaktocatGameProps>(function 
     let newFood: Point;
     do {
       newFood = {
-        x: Math.floor(Math.random() * GRID_SIZE),
-        y: Math.floor(Math.random() * GRID_SIZE),
+        x: 1 + Math.floor(Math.random() * (GRID_SIZE - 2)),
+        y: 1 + Math.floor(Math.random() * (GRID_SIZE - 2)),
       };
     } while (s.snake.some(seg => seg.x === newFood.x && seg.y === newFood.y));
     s.food = newFood;
@@ -141,7 +141,8 @@ const SnaktocatGame = forwardRef<SnaktocatGameRef, SnaktocatGameProps>(function 
       case 'RIGHT': head.x++; break;
     }
 
-    if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
+    // Die if hitting walls (border cells at 0 and GRID_SIZE-1)
+    if (head.x <= 0 || head.x >= GRID_SIZE - 1 || head.y <= 0 || head.y >= GRID_SIZE - 1) {
       s.gameState = 'dead';
       setGameState('dead');
       setTimeout(() => onGameOver(s.score), 500);
