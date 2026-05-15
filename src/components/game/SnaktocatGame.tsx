@@ -46,6 +46,7 @@ const SnaktocatGame = forwardRef<SnaktocatGameRef, SnaktocatGameProps>(function 
   onGameStart,
 }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const monaImgRef = useRef<HTMLImageElement | null>(null);
   const stateRef = useRef<{
     snake: Point[];
     direction: Direction;
@@ -69,6 +70,13 @@ const SnaktocatGame = forwardRef<SnaktocatGameRef, SnaktocatGameProps>(function 
   const animRef = useRef<number>(0);
   const [displayScore, setDisplayScore] = useState(0);
   const [gameState, setGameState] = useState<GameState>('waiting');
+
+  // Load Mona image for snake head
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/assets/mona.png';
+    img.onload = () => { monaImgRef.current = img; };
+  }, []);
 
   const spawnFood = useCallback(() => {
     const s = stateRef.current;
@@ -201,16 +209,22 @@ const SnaktocatGame = forwardRef<SnaktocatGameRef, SnaktocatGameProps>(function 
       ctx.fillRect(fx + 2, fy - 2, CELL_SIZE - 9, 2);
       ctx.fillRect(fx - 2, fy + 2, 2, CELL_SIZE - 9);
 
-      // Draw snake: dark pixel blocks like original Nokia
-      ctx.fillStyle = LCD_DARK;
+      // Draw snake: Mona head + dark pixel body
       s.snake.forEach((seg, i) => {
         const x = seg.x * CELL_SIZE;
         const y = seg.y * CELL_SIZE;
-        if (i === 0) {
-          // Head: slightly larger looking block
+        if (i === 0 && monaImgRef.current) {
+          // Draw Mona as the snake head (slightly larger than body)
+          const headSize = CELL_SIZE + 4;
+          const offset = -2;
+          ctx.drawImage(monaImgRef.current, x + offset, y + offset, headSize, headSize);
+        } else if (i === 0) {
+          // Fallback if image not loaded yet
+          ctx.fillStyle = LCD_DARK;
           ctx.fillRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
         } else {
           // Body: standard pixel block
+          ctx.fillStyle = LCD_DARK;
           ctx.fillRect(x + 1, y + 1, CELL_SIZE - 3, CELL_SIZE - 3);
         }
       });
