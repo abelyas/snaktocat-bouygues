@@ -1,6 +1,14 @@
 name: snaktocat-bouygues
 metadata:
   template: snaktocat-bouygues@0.0.1
+infra:
+  provider: bicep
+  path: infra
+  module: main
+hooks:
+  postprovision:
+    shell: sh
+    run: scripts/approve-private-link.sh
 services:
   web:
     project: .
