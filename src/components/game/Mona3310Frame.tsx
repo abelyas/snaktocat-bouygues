@@ -1,6 +1,6 @@
 'use client';
 
-interface Nokia3310FrameProps {
+interface Mona3310FrameProps {
   children: React.ReactNode;
   screenWidth: number;
   screenHeight: number;
@@ -17,7 +17,7 @@ const KEYPAD_LABELS = [
   ['*', '+'], ['0', '⌂'], ['#', ''],
 ];
 
-export default function Nokia3310Frame({
+export default function Mona3310Frame({
   children,
   screenWidth,
   screenHeight,
@@ -25,7 +25,7 @@ export default function Nokia3310Frame({
   onDpadDown,
   onDpadLeft,
   onDpadRight,
-}: Nokia3310FrameProps) {
+}: Mona3310FrameProps) {
   return (
     <div className="relative select-none" style={{ width: 320 }}>
       {/* Phone body: dark blue with rounded top, straighter bottom */}
@@ -47,7 +47,7 @@ export default function Nokia3310Frame({
           ))}
         </div>
 
-        {/* NOKIA brand */}
+        {/* MONA brand */}
         <div className="text-center mb-3">
           <span
             className="font-bold tracking-[0.25em] uppercase select-none"
@@ -58,7 +58,7 @@ export default function Nokia3310Frame({
               fontFamily: 'Arial, Helvetica, sans-serif',
             }}
           >
-            NOKIA
+            MONA
           </span>
         </div>
 

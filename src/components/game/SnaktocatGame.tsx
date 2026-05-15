@@ -25,7 +25,7 @@ const CELL_SIZE = 13;
 const CANVAS_W = GRID_SIZE * CELL_SIZE;
 const CANVAS_H = GRID_SIZE * CELL_SIZE;
 
-// Nokia green LCD colors
+// Retro green LCD colors
 const LCD_BG = '#9bbc0f';
 const LCD_DARK = '#0f380f';
 const LCD_MID = '#306230';
@@ -166,7 +166,7 @@ const SnaktocatGame = forwardRef<SnaktocatGameRef, SnaktocatGameProps>(function 
     }
   }, [onGameOver, spawnFood]);
 
-  // Game loop: Nokia LCD pixel style
+  // Game loop: Retro LCD pixel style
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -187,7 +187,7 @@ const SnaktocatGame = forwardRef<SnaktocatGameRef, SnaktocatGameProps>(function 
       ctx.fillStyle = LCD_BG;
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-      // Draw border (Nokia snake had walls)
+      // Draw border (Retro snake had walls)
       ctx.fillStyle = LCD_DARK;
       for (let i = 0; i < GRID_SIZE; i++) {
         // Top and bottom border

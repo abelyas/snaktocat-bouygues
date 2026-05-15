@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import SnaktocatGame from '@/components/game/SnaktocatGame';
 import type { SnaktocatGameRef } from '@/components/game/SnaktocatGame';
-import Nokia3310Frame from '@/components/game/Nokia3310Frame';
+import Mona3310Frame from '@/components/game/Mona3310Frame';
 import ScoreCard from '@/components/game/ScoreCard';
 import { encodePayload } from '@/lib/crypto';
 
@@ -225,10 +225,10 @@ export default function GamePage() {
     );
   }
 
-  // Game screen with Nokia 3310 frame
+  // Game screen with Mona 3310 frame
   return (
     <main className="min-h-screen flex flex-col items-center justify-center overflow-hidden p-2 sm:p-4 bg-[#0d1117]">
-      <Nokia3310Frame
+      <Mona3310Frame
         screenWidth={SCREEN_W}
         screenHeight={SCREEN_H}
         onDpadUp={() => gameRef.current?.handleDirection('UP')}
@@ -246,7 +246,7 @@ export default function GamePage() {
           onGameOver={handleGameOver}
           onGameStart={handleGameStart}
         />
-      </Nokia3310Frame>
+      </Mona3310Frame>
       {submitting && (
         <div className="mt-4 text-sm text-gray-400 animate-pulse">Saving score...</div>
       )}
